@@ -29,3 +29,7 @@
 
 sysinfo.txt
 mono_crash.*
+
+# Local AI service secrets (never commit real API keys).
+# The template is committed; the real file is ignored.
+/[Ss]ecrets/ai_keys.json

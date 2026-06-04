@@ -2,6 +2,35 @@
 
 Chronological log of what was implemented each sprint. Newest entries on top.
 
+## Sprint 3 - Quest System Runtime (2026-06-04)
+
+Goal: a runtime quest state machine on top of the Sprint 1 config and the Sprint 2
+`ILLMService`. No NPC interaction, dialogue pipeline, TTS, or real UI.
+
+Done:
+
+- `Assets/Scripts/Quest/QuestRuntimeState.cs`: per-quest runtime wrapper (config + `QuestState`
+  + last LLM eval info).
+- `Assets/Scripts/Quest/QuestEvents.cs`: `QuestStateChangedEventArgs` broadcast payload.
+- `Assets/Scripts/Quest/IQuestEvaluator.cs`: `IQuestEvaluator`, `QuestEvalRequest`, `QuestEvalResult`.
+- `Assets/Scripts/Quest/RuleQuestEvaluator.cs`: Composite completion rule (all children Completed).
+- `Assets/Scripts/Quest/LLMQuestEvaluator.cs`: TargetDialogue evaluator that calls `ILLMService`
+  only (no vendor SDK), renders the QuestEval prompt, and parses the `{isCompleted,reason,confidence}` JSON.
+- `Assets/Scripts/Quest/QuestManager.cs`: state machine (Inactive/Active/Completed) with start-quest
+  auto-activation, Composite child auto-activation, parent auto-complete cascade, NextQuestID chaining,
+  TargetNPCID filtering, and a `QuestStateChanged` event.
+- `Assets/Scripts/Quest/QuestSystemTester.cs`: Debug-only MonoBehaviour with ContextMenu hooks
+  (init / activate / complete / LLM-evaluate / log states).
+
+Decisions:
+
+- Start quest is auto-detected (root with `ParentQuestID==0` not referenced by any `NextQuestID`,
+  lowest SortOrder/QuestID) with an optional Inspector override.
+- A Composite quest with no children does not auto-complete, to avoid an instant cascade.
+- The LLM evaluator never mutates quest state; the test entry applies the verdict via `TryCompleteQuest`.
+
+Not done (out of scope, by design): NPC interaction, DialoguePipeline, TTS playback, full UI.
+
 ## Sprint 0 - Collaboration Baseline, Directory Structure & Cursor Constraints (2026-06-03)
 
 Goal: establish the engineering baseline. No business logic.

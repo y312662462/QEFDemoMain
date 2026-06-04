@@ -1,0 +1,7 @@
+QuestID,NextQuestID,QuestName,QuestDescription,QuestType,TargetNPCID,QuestParam,ShowInUI,ParentQuestID,SortOrder
+10001,10002,Enter the market,Walk into the market and start the shopping challenge.,Composite,0,,true,0,1
+10002,10006,Buy three foods,"Use simple English to buy an apple, some bread and a carrot.",Composite,0,10003|10004|10005,true,0,2
+10003,0,Buy an apple,Ask the apple seller for an apple in simple English.,TargetDialogue,10001,quest_eval_buy_apple.txt,true,10002,3
+10004,0,Buy some bread,Ask the baker for some bread in simple English.,TargetDialogue,10002,quest_eval_buy_bread.txt,true,10002,4
+10005,0,Buy a carrot,Ask the carrot seller for a carrot in simple English.,TargetDialogue,10003,quest_eval_buy_carrot.txt,true,10002,5
+10006,0,Shopping recap,Review what you bought today.,Composite,0,,true,0,6
