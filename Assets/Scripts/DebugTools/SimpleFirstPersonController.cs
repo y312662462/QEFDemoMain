@@ -39,9 +39,6 @@ namespace MultiAgentNPC.DebugTools
         [Tooltip("Mouse look sensitivity multiplier.")]
         public float mouseSensitivity = 2f;
 
-        [Tooltip("Jump height in meters.")]
-        public float jumpHeight = 1.2f;
-
         [Tooltip("Downward gravity acceleration (positive value, applied as -gravity).")]
         public float gravity = 9.81f;
 
@@ -126,16 +123,12 @@ namespace MultiAgentNPC.DebugTools
                 move.Normalize();
             }
 
-            // Apply gravity and jumping on the vertical axis.
+            // Apply gravity on the vertical axis. No jump: the Space key is reserved
+            // for a separate (not implemented here) push-to-record voice input.
             if (_controller.isGrounded)
             {
                 // Small downward force keeps isGrounded stable while grounded.
                 _verticalVelocity = -1f;
-
-                if (Input.GetKeyDown(KeyCode.Space))
-                {
-                    _verticalVelocity = Mathf.Sqrt(2f * jumpHeight * gravity);
-                }
             }
             else
             {
