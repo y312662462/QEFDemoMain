@@ -2,6 +2,43 @@
 
 Chronological log of what was implemented each sprint. Newest entries on top.
 
+## Sprint 4 - NPC Activation, Interaction Range & Facing (2026-06-04)
+
+Goal: detect the player near an NPC, promote a single global ActiveNPC, expose name +
+"按住空格说话" hint via events, and yaw the NPC toward the player while active (returning to
+its default heading on exit). No dialogue pipeline, no LLM/TTS/STT, no QuestSystem changes,
+no complex UI.
+
+Done:
+
+- `Assets/Scripts/NPC/NPCEvents.cs`: `ActiveNPCChangedEventArgs` (id/name/proximity text + computed
+  `HintText`) and the default hint constant `按住空格说话`.
+- `Assets/Scripts/NPC/ActiveNPCService.cs`: plain class enforcing the single-active invariant;
+  `ActiveNPCChanged` / `ActiveNPCCleared` events (clear is the reserved Dialogue-rollback hook).
+- `Assets/Scripts/NPC/NPCManager.cs`: scene singleton owning a shared `ConfigManager`
+  (`LoadNpcConfigs`), a duplicate-free ordered candidate list, and the conflict rule
+  (first-come keeps focus; new entrants queue; on exit the next candidate is promoted).
+- `Assets/Scripts/NPC/NPCController.cs`: resolves its `NPCConfig`, registers with the manager,
+  stores `CurrentPlayerTransform`, exposes read-only `IsActive` / `NpcName` / `ProximityPromptText`
+  / `HintText` / `InteractionRadius`, and raises `ActivationChanged(bool)`.
+- `Assets/Scripts/NPC/NPCInteractionTrigger.cs`: child `SphereCollider` trigger, filters by the
+  `Player` tag, sizes its radius from the controller's effective radius, forwards enter/exit.
+- `Assets/Scripts/NPC/NPCFacingController.cs`: caches the default rotation, reads the player from
+  the sibling controller, yaw-only `RotateTowards` smoothing while active, returns to default when
+  inactive.
+- `Assets/Scripts/NPC/NPCNameplate.cs`: minimal label driving an optional `TextMesh` / visual root
+  (events remain the primary contract).
+
+Decisions:
+
+- Trigger lives on a child `InteractionTrigger` (SphereCollider `isTrigger`, optional kinematic
+  gravity-off Rigidbody). The player needs only tag `Player` + a collider/CharacterController; the
+  kinematic Rigidbody fallback goes on the NPC trigger, never forced onto the player.
+- Single-active conflict resolved first-come-first-served; overlapping NPCs are queued, not stolen.
+- Defensive errors: missing `NPCManager`, unknown `NPCID`, and trigger without an `NPCController`.
+
+Not done (out of scope, by design): DialoguePipeline, LLM/TTS/STT calls, QuestSystem changes, full UI.
+
 ## Sprint 3 - Quest System Runtime (2026-06-04)
 
 Goal: a runtime quest state machine on top of the Sprint 1 config and the Sprint 2

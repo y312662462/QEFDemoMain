@@ -32,6 +32,36 @@ Verification checklist, grown per sprint.
 6. Confirm the TargetNPCID filter: with `npcIdField` set to a non-matching NPC, the evaluator reports
    "No active TargetDialogue quest for NPC ...". Confirm 0 compile errors and 0 new warnings.
 
+## Sprint 4 - NPC activation, interaction range & facing verification
+
+Setup:
+
+1. Open `Assets/Scenes/DemoMain.unity`. Add an empty GameObject `NPCManager` and add the
+   `NPCManager` component.
+2. On each NPC GameObject add `NPCController` (set `NPCID` to a row in `NPCConfig.csv`),
+   `NPCFacingController`, and optionally `NPCNameplate` (assign a child `TextMesh` to see text).
+3. Add a child GameObject `InteractionTrigger` to each NPC with a `SphereCollider`
+   (`isTrigger = true`), the `NPCInteractionTrigger` component, and optionally a kinematic
+   `Rigidbody` (`isKinematic = true`, `useGravity = false`).
+4. Confirm the player GameObject has tag `Player` and a collider/`CharacterController`.
+   If trigger events do not fire, add a kinematic `Rigidbody` to the `InteractionTrigger`.
+5. Confirm `NPCConfig.csv` has `NPCName`, `ProximityPromptText` and `InteractionRadius` for each id.
+
+Checks:
+
+1. Enter Play. Console logs the NPC config load count and a "Registered NPC ..." line per NPC.
+2. Walk the player into NPC A's range: expect an `ActiveNPCChanged` log (name + hint), the nameplate
+   shows `按住空格说话` (or the config text), and NPC A yaws to face the player.
+3. While inside A, step into an overlapping NPC B's range: A stays active (B only queued),
+   proving exactly one ActiveNPC.
+4. Leave A's range while still inside B: expect `ActiveNPC cleared (was A)` then `ActiveNPCChanged`
+   for B; B now faces the player.
+5. Leave all ranges: expect `ActiveNPC cleared`, nameplates hide, and every NPC smoothly returns to
+   its recorded default heading.
+6. Confirm 0 compile errors and 0 new warnings. Verify defensive errors fire when expected: remove
+   the `NPCManager` (NPCController logs a missing-manager error); set an unknown `NPCID` (logs a
+   not-found error); place `NPCInteractionTrigger` with no parent `NPCController` (logs an error).
+
 ## Future sprints
 
 - Dialogue pipeline, NPC system, Quest system, Services, UI, Debug panel test cases to be added
