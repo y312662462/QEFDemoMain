@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using MultiAgentNPC.Animation;
 using MultiAgentNPC.Config;
 using MultiAgentNPC.DebugTools;
 using MultiAgentNPC.NPC;
@@ -61,11 +62,23 @@ namespace MultiAgentNPC.Dialogue
         private PromptManager _promptManager;
         private readonly ConversationHistoryManager _history = new ConversationHistoryManager();
 
+        // Post-commit quest evaluation runs on its OWN lifecycle (Sprint 9). It is NOT tied
+        // to the dialogue session: a turn that already played and committed must still be
+        // judged even if the player immediately leaves the NPC. Cancelled only on OnDestroy
+        // / shutdown (or the evaluator's own per-eval timeout).
+        private QuestTurnEvaluator _questTurnEvaluator;
+        private readonly CancellationTokenSource _questEvalCts = new CancellationTokenSource();
+
         private DialogueState _state = DialogueState.Idle;
         private DialogueSession _currentSession;
         private int _sessionCounter;
         private AudioClip _currentClip;
         private bool _subscribed;
+
+        // Sprint 10: the speaking NPC's animation/expression drivers for the current turn,
+        // resolved when the turn starts and cleared when it ends.
+        private NPCAnimationController _turnAnimation;
+        private ExpressionController _turnExpression;
 
         private void Start()
         {
@@ -78,6 +91,18 @@ namespace MultiAgentNPC.Dialogue
         {
             Unsubscribe();
             CancelActiveTurn();
+
+            // Shutdown is the ONLY place that aborts outstanding post-commit quest
+            // evaluations. Leaving NPC range must NOT cancel them (see OnActiveNpcCleared).
+            try
+            {
+                _questEvalCts.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+
+            _questEvalCts.Dispose();
         }
 
         private void BuildServices()
@@ -99,6 +124,11 @@ namespace MultiAgentNPC.Dialogue
             }
 
             _promptManager = new PromptManager();
+
+            if (_llm != null)
+            {
+                _questTurnEvaluator = new QuestTurnEvaluator(_llm, _promptManager);
+            }
 
             if (subtitleUI == null)
             {
@@ -185,10 +215,13 @@ namespace MultiAgentNPC.Dialogue
 
         private void OnActiveNpcCleared(NPCController previous)
         {
-            // The active NPC left (or was switched out): cancel any running turn, tear down
-            // presentation (audio/subtitles/queue) and drop back to Idle. No History is
-            // written and no task result is applied - the commit gate sits past the
-            // cancellation check in the pipeline.
+            // The active NPC left (or was switched out): cancel any running PRE-commit turn,
+            // tear down presentation (audio/subtitles/queue) and drop back to Idle. A turn
+            // still in flight never committed, so no History is written here.
+            //
+            // IMPORTANT (Sprint 9): this does NOT cancel post-commit quest evaluation. A turn
+            // that already played and committed is valid; its evaluation runs on the
+            // manager-lifetime _questEvalCts and must survive the player leaving range.
             CancelActiveTurn();
             DebugStateStore.Instance.SetCurrentNpc(0, string.Empty);
             SetState(DialogueState.Idle);
@@ -256,6 +289,8 @@ namespace MultiAgentNPC.Dialogue
             var session = new DialogueSession(++_sessionCounter);
             _currentSession = session;
 
+            ResolveTurnVisualTargets();
+
             DebugStateStore.Instance.SetSession(session.Id, false);
 
             DialoguePipeline pipeline = BuildPipeline();
@@ -306,10 +341,38 @@ namespace MultiAgentNPC.Dialogue
                 {
                     DebugStateStore.Instance.SetTtsQueueLength(0);
                     _currentSession = null;
+
+                    // Sprint 10 req 5: the NPC returns to Idle once it finishes speaking
+                    // (also covers cancellation, which unwinds through here).
+                    _turnAnimation?.ReturnToIdle();
+                    _turnAnimation = null;
+                    _turnExpression = null;
+
                     RestoreTerminalState();
                 }
 
                 session.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Resolves the speaking NPC's animation/expression drivers for the turn that is
+        /// starting (Sprint 10). Looked up from the active NPC so the action is applied to
+        /// the NPC that is actually talking. Either may be null when the prefab has no such
+        /// component - the presenter calls are null-safe.
+        /// </summary>
+        private void ResolveTurnVisualTargets()
+        {
+            NPCController active = NPCManager.Instance != null ? NPCManager.Instance.ActiveNpc : null;
+            if (active != null)
+            {
+                _turnAnimation = active.GetComponentInChildren<NPCAnimationController>();
+                _turnExpression = active.GetComponentInChildren<ExpressionController>();
+            }
+            else
+            {
+                _turnAnimation = null;
+                _turnExpression = null;
             }
         }
 
@@ -358,11 +421,25 @@ namespace MultiAgentNPC.Dialogue
                 subtitleUI?.ShowError(message);
             };
 
+            // Post-commit hook: gate on the session still being current AND the committed
+            // turn's session id matching, then launch quest evaluation. Once launched, the
+            // evaluation lives on the manager-lifetime token, NOT this session.
+            Action<MultiAgentNPC.Quest.CommittedTurn> onCommitted = turn =>
+            {
+                if (turn == null || !IsCurrentSession(session) || turn.SessionId != session.Id)
+                {
+                    return;
+                }
+
+                LaunchQuestEval(turn);
+            };
+
             pipeline.StateChanged += onState;
             pipeline.LlmRawReceived += onLlmRaw;
             pipeline.JsonParsed += onJson;
             pipeline.TtsQueueChanged += onQueue;
             pipeline.ErrorOccurred += onError;
+            pipeline.TurnCommitted += onCommitted;
 
             return () =>
             {
@@ -371,7 +448,41 @@ namespace MultiAgentNPC.Dialogue
                 pipeline.JsonParsed -= onJson;
                 pipeline.TtsQueueChanged -= onQueue;
                 pipeline.ErrorOccurred -= onError;
+                pipeline.TurnCommitted -= onCommitted;
             };
+        }
+
+        /// <summary>
+        /// Fire-and-forget launch of post-commit quest evaluation for a committed turn.
+        /// Deliberately not awaited so the dialogue turn returns to InRange immediately;
+        /// the evaluation cannot block playback or input. Uses the manager-lifetime
+        /// <see cref="_questEvalCts"/> so leaving NPC range does not abort a valid eval.
+        /// </summary>
+        private void LaunchQuestEval(MultiAgentNPC.Quest.CommittedTurn turn)
+        {
+            if (_questTurnEvaluator == null)
+            {
+                return;
+            }
+
+            _ = SafeRunQuestEval(turn);
+        }
+
+        private async Task SafeRunQuestEval(MultiAgentNPC.Quest.CommittedTurn turn)
+        {
+            try
+            {
+                QuestManager quests = questHost != null ? questHost.QuestManager : null;
+                await _questTurnEvaluator.EvaluateTurnAsync(quests, turn, _questEvalCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                // Manager shutdown / timeout: nothing to do, dialogue is unaffected.
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[DialogueManager] Quest evaluation failed for {turn}: {e}");
+            }
         }
 
         private void RestoreTerminalState()
@@ -410,6 +521,17 @@ namespace MultiAgentNPC.Dialogue
 
         public void ShowNpcSentence(string text) => subtitleUI?.ShowNpcSentence(text);
 
+        /// <summary>
+        /// Sprint 10: drives the speaking NPC's Animator action and (reserved) expression as
+        /// each sentence starts. Routed to the Animation module; mapping/fallbacks live there.
+        /// Null-safe and non-throwing so a missing component never breaks playback.
+        /// </summary>
+        public void PlaySentenceVisuals(int actionId, int expressionId)
+        {
+            _turnAnimation?.PlayAction(actionId);
+            _turnExpression?.ApplyExpression(expressionId);
+        }
+
         public void ShowError(string text) => subtitleUI?.ShowError(text);
 
         public void ClearPlayerText() => subtitleUI?.ShowPlayerText(string.Empty);
@@ -431,6 +553,10 @@ namespace MultiAgentNPC.Dialogue
             _currentClip = null;
 
             subtitleUI?.Clear();
+
+            // Sprint 10: stop any mid-sentence action immediately on rollback/cancel so the
+            // NPC visibly settles back to Idle (the final clear/reset happens in BeginTurn).
+            _turnAnimation?.ReturnToIdle();
         }
 
         public async Task PlaySentenceAsync(byte[] wavBytes, string clipName, CancellationToken cancellationToken)

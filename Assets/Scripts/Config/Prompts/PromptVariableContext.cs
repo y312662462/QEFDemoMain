@@ -15,6 +15,7 @@ namespace MultiAgentNPC.Prompts
         // callers share the exact same spelling.
         public const string NpcId = "npc_id";
         public const string NpcName = "npc_name";
+        public const string NpcResponseText = "npc_response_text";
         public const string PlayerText = "player_text";
         public const string ConversationHistory = "conversation_history";
         public const string CurrentQuestId = "current_quest_id";

@@ -83,6 +83,11 @@ namespace MultiAgentNPC.Dialogue
 
                     _presenter.ShowNpcSentence(sentence.Text);
 
+                    // Sprint 10: drive the NPC action/expression as this sentence starts.
+                    // Raw ids only - the actionId -> Animator mapping lives in the Animation
+                    // module (via the presenter), never here.
+                    _presenter.PlaySentenceVisuals(sentence.ActionId, sentence.ExpressionId);
+
                     if (tts != null && tts.IsSuccess && tts.Value != null && tts.Value.Length > 0)
                     {
                         await _presenter.PlaySentenceAsync(tts.Value, $"npc{npcId}_s{i}", cancellationToken);

@@ -3,12 +3,14 @@ Quest: {{current_quest_name}} (id {{current_quest_id}}).
 Goal: the player must ask the carrot seller for a carrot using simple English,
 for example "I want a carrot, please."
 
-Conversation to judge:
-Player: {{player_text}}
-History:
+Previous conversation history:
 {{conversation_history}}
 
-Decide whether the player completed the goal.
+Current turn:
+Player: {{player_text}}
+NPC {{npc_name}}: {{npc_response_text}}
+
+Decide whether the player completed the goal in the current turn.
 Reply with valid JSON only, no Markdown, no explanation outside the JSON:
 {
   "isCompleted": true,

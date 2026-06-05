@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using MultiAgentNPC.Config;
+using MultiAgentNPC.Quest;
 using MultiAgentNPC.Services;
 
 namespace MultiAgentNPC.Dialogue
@@ -59,6 +60,14 @@ namespace MultiAgentNPC.Dialogue
         /// <summary>Raised with a non-fatal or fatal error message for this turn.</summary>
         public event Action<string> ErrorOccurred;
 
+        /// <summary>
+        /// Raised exactly once per turn AFTER the turn has been committed to History
+        /// (playback finished and both commit gates passed). Carries an immutable
+        /// <see cref="CommittedTurn"/> snapshot. The host uses this to launch post-commit
+        /// quest evaluation; the pipeline itself never references the quest system.
+        /// </summary>
+        public event Action<CommittedTurn> TurnCommitted;
+
         public DialoguePipeline(
             ILLMService llm,
             ITTSService tts,
@@ -107,6 +116,8 @@ namespace MultiAgentNPC.Dialogue
             _presenter.ShowPlayerText(playerText);
 
             // 1. Resolve + render the prompt (never hard-coded; from PromptManager).
+            // 'history' here is the conversation BEFORE this turn is committed; it is also
+            // forwarded to the post-commit quest evaluation as PriorHistory.
             string history = _history != null ? _history.GetRecentFormatted(npcId) : "(no previous turns)";
             ResolvedPrompt resolved = _resolver != null ? _resolver.Resolve(npc, playerText, history) : null;
             if (resolved == null || !resolved.IsValid)
@@ -154,7 +165,7 @@ namespace MultiAgentNPC.Dialogue
             await SpeakAsync(npcId, npc, response, cancellationToken);
 
             // 5. Single transaction commit point (gated on cancellation + session identity).
-            CommitTurn(session, npcId, playerText, response);
+            CommitTurn(session, npcId, npc.NpcName, playerText, response, history);
         }
 
         private async Task SpeakAsync(int npcId, NPCConfig npc, NPCResponse response, CancellationToken cancellationToken)
@@ -183,7 +194,13 @@ namespace MultiAgentNPC.Dialogue
         /// completed. Gated on both the session's cancellation token and the host's
         /// session-identity check so a cancelled or stale session never writes History.
         /// </summary>
-        private void CommitTurn(DialogueSession session, int npcId, string playerText, NPCResponse response)
+        private void CommitTurn(
+            DialogueSession session,
+            int npcId,
+            string npcName,
+            string playerText,
+            NPCResponse response,
+            string priorHistory)
         {
             // Cancelled during/after playback => do not commit (requirements 5/6/8).
             session.Token.ThrowIfCancellationRequested();
@@ -199,10 +216,12 @@ namespace MultiAgentNPC.Dialogue
             string npcText = response.JoinedText();
             _history?.Commit(npcId, new DialogueTurn(playerText, npcText, response.Sentences));
 
-            // FUTURE COMMIT HOOK (Sprint 7 scope is gating-only): when task/quest judgment
-            // is applied per turn, apply it HERE so it shares this same cancel-safe,
-            // session-checked gate. Do NOT call QuestManager / LLMQuestEvaluator from the
-            // pipeline in this sprint.
+            // Sprint 9 COMMIT HOOK: the turn is now durable in History (playback finished
+            // and both gates passed). Notify the host so it can launch post-commit quest
+            // evaluation on its OWN lifecycle. The pipeline never touches the quest system.
+            var committed = new CommittedTurn(
+                session.Id, npcId, npcName, playerText, npcText, priorHistory, DateTime.UtcNow);
+            RaiseTurnCommitted(committed);
         }
 
         private void ReportError(string message)
@@ -222,6 +241,7 @@ namespace MultiAgentNPC.Dialogue
         private void RaiseLlmRaw(string raw) => SafeInvoke(LlmRawReceived, raw, nameof(LlmRawReceived));
         private void RaiseJsonParsed(string summary) => SafeInvoke(JsonParsed, summary, nameof(JsonParsed));
         private void RaiseTtsQueue(int length) => SafeInvoke(TtsQueueChanged, length, nameof(TtsQueueChanged));
+        private void RaiseTurnCommitted(CommittedTurn turn) => SafeInvoke(TurnCommitted, turn, nameof(TurnCommitted));
 
         private static void SafeInvoke<T>(Action<T> handler, T value, string name)
         {

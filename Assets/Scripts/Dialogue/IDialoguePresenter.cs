@@ -16,6 +16,15 @@ namespace MultiAgentNPC.Dialogue
         /// <summary>Shows the NPC's current sentence.</summary>
         void ShowNpcSentence(string text);
 
+        /// <summary>
+        /// Drives per-sentence NPC visuals (Sprint 10): play the Animator action for
+        /// <paramref name="actionId"/> and apply the reserved <paramref name="expressionId"/>.
+        /// Called as each sentence starts. Implementations must run on the Unity main thread
+        /// and must never throw; an unknown action falls back to Idle and a missing
+        /// expression resource is ignored.
+        /// </summary>
+        void PlaySentenceVisuals(int actionId, int expressionId);
+
         /// <summary>Shows an error message to the player.</summary>
         void ShowError(string text);
 

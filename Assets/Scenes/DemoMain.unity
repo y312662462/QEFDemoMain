@@ -1065,6 +1065,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NPC_HatGril
       objectReference: {fileID: 0}
+    - target: {fileID: 7311001146634824147, guid: 306eab019c0c7514a956e59785b8733a, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 88aaa99de7862ec4bb3eb499967a746b, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1073,6 +1077,11 @@ PrefabInstance:
 --- !u!4 &390071253 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3196426837199673546, guid: 306eab019c0c7514a956e59785b8733a, type: 3}
+  m_PrefabInstance: {fileID: 390071252}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &390071254 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 7311001146634824147, guid: 306eab019c0c7514a956e59785b8733a, type: 3}
   m_PrefabInstance: {fileID: 390071252}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &510680539
@@ -1337,6 +1346,7 @@ GameObject:
   - component: {fileID: 680319102}
   - component: {fileID: 680319103}
   - component: {fileID: 680319104}
+  - component: {fileID: 680319105}
   m_Layer: 0
   m_Name: NPC2_Bread
   m_TagString: Untagged
@@ -1392,6 +1402,21 @@ MonoBehaviour:
   pivotOverride: {fileID: 0}
   rotationSpeed: 360
   angleDeadzone: 0.5
+--- !u!114 &680319105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 680319101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac56fda4580f23b4f8f830fe2c0bef4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MultiAgentNPC.Animation.NPCAnimationController
+  animator: {fileID: 390071254}
+  mappingTable: {fileID: 0}
+  logActions: 0
 --- !u!1 &737388573
 GameObject:
   m_ObjectHideFlags: 0
@@ -1545,6 +1570,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 846966720}
+  - component: {fileID: 846966723}
+  - component: {fileID: 846966722}
+  - component: {fileID: 846966721}
   m_Layer: 0
   m_Name: VoiceInput
   m_TagString: Untagged
@@ -1567,6 +1595,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1736915589}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &846966721
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 846966719}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1c4d57d99504af40afc977e10229a03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MultiAgentNPC.Dialogue.VoiceInputController
+  aiServiceConfig: {fileID: 0}
+  talkInput: {fileID: 0}
+  micRecorder: {fileID: 0}
+  dialogueManager: {fileID: 0}
+  subtitleUI: {fileID: 0}
+  logEvents: 1
+--- !u!114 &846966722
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 846966719}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 127af640bac64a6469ed2f83f13bb49a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MultiAgentNPC.Audio.MicrophoneRecorder
+  preferredSampleRate: 16000
+  maxSeconds: 15
+  minSeconds: 0.3
+--- !u!114 &846966723
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 846966719}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: caa943df181dfe943a1c2816edf02460, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MultiAgentNPC.InputControl.PushToTalkInputController
+  talkBinding: <Keyboard>/space
 --- !u!1 &851935309
 GameObject:
   m_ObjectHideFlags: 0
@@ -1846,6 +1920,7 @@ GameObject:
   - component: {fileID: 952571442}
   - component: {fileID: 952571443}
   - component: {fileID: 952571444}
+  - component: {fileID: 952571445}
   m_Layer: 0
   m_Name: NPC3_Carrot
   m_TagString: Untagged
@@ -1901,6 +1976,21 @@ MonoBehaviour:
   pivotOverride: {fileID: 0}
   rotationSpeed: 360
   angleDeadzone: 0.5
+--- !u!114 &952571445
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 952571441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac56fda4580f23b4f8f830fe2c0bef4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MultiAgentNPC.Animation.NPCAnimationController
+  animator: {fileID: 1455699040}
+  mappingTable: {fileID: 0}
+  logActions: 0
 --- !u!1 &1009171137
 GameObject:
   m_ObjectHideFlags: 0
@@ -3103,6 +3193,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7049356694607010339, guid: b670873e6c417fd4088eb1c3f4c30738, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 88aaa99de7862ec4bb3eb499967a746b, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3111,6 +3205,11 @@ PrefabInstance:
 --- !u!4 &1455699039 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6559772440241113934, guid: b670873e6c417fd4088eb1c3f4c30738, type: 3}
+  m_PrefabInstance: {fileID: 1455699038}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &1455699040 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 7049356694607010339, guid: b670873e6c417fd4088eb1c3f4c30738, type: 3}
   m_PrefabInstance: {fileID: 1455699038}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1489787665
@@ -3323,6 +3422,7 @@ GameObject:
   - component: {fileID: 1676408740}
   - component: {fileID: 1676408741}
   - component: {fileID: 1676408742}
+  - component: {fileID: 1676408743}
   m_Layer: 0
   m_Name: NPC1_Apple
   m_TagString: Untagged
@@ -3378,6 +3478,21 @@ MonoBehaviour:
   pivotOverride: {fileID: 0}
   rotationSpeed: 360
   angleDeadzone: 0.5
+--- !u!114 &1676408743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1676408739}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac56fda4580f23b4f8f830fe2c0bef4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MultiAgentNPC.Animation.NPCAnimationController
+  animator: {fileID: 2125111092}
+  mappingTable: {fileID: 0}
+  logActions: 0
 --- !u!1 &1736915587
 GameObject:
   m_ObjectHideFlags: 0
@@ -4132,6 +4247,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1676408740}
     m_Modifications:
+    - target: {fileID: 501321878169423138, guid: d078feebdbf8d3941aadb7205e5b5f1f, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 88aaa99de7862ec4bb3eb499967a746b, type: 2}
     - target: {fileID: 2139333445591643806, guid: d078feebdbf8d3941aadb7205e5b5f1f, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -4184,6 +4303,11 @@ PrefabInstance:
 --- !u!4 &2125111091 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2139333445591643806, guid: d078feebdbf8d3941aadb7205e5b5f1f, type: 3}
+  m_PrefabInstance: {fileID: 2125111090}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &2125111092 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 501321878169423138, guid: d078feebdbf8d3941aadb7205e5b5f1f, type: 3}
   m_PrefabInstance: {fileID: 2125111090}
   m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807

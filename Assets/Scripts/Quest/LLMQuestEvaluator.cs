@@ -66,7 +66,13 @@ namespace MultiAgentNPC.Quest
                 .Set(PromptVariableContext.CurrentQuestName, quest.QuestName)
                 .Set(PromptVariableContext.CurrentQuestDescription, quest.QuestDescription)
                 .Set(PromptVariableContext.TargetNpcId, quest.TargetNpcId)
+                .Set(PromptVariableContext.NpcName,
+                    string.IsNullOrEmpty(request.NpcName) ? "(unknown)" : request.NpcName)
                 .Set(PromptVariableContext.PlayerText, request.PlayerText ?? string.Empty)
+                .Set(PromptVariableContext.NpcResponseText,
+                    string.IsNullOrEmpty(request.NpcResponseText)
+                        ? "(no reply)"
+                        : request.NpcResponseText)
                 .Set(PromptVariableContext.ConversationHistory,
                     string.IsNullOrEmpty(request.ConversationHistory)
                         ? "(no previous turns)"

@@ -19,6 +19,12 @@ namespace MultiAgentNPC.Quest
         /// <summary>Recent conversation history text (TargetDialogue evaluation).</summary>
         public string ConversationHistory { get; }
 
+        /// <summary>Current NPC display name (TargetDialogue evaluation).</summary>
+        public string NpcName { get; }
+
+        /// <summary>The NPC's reply text for the current turn (TargetDialogue evaluation).</summary>
+        public string NpcResponseText { get; }
+
         /// <summary>
         /// Snapshot of child quest states, keyed by child quest id (Composite evaluation).
         /// Empty for non-composite quests.
@@ -29,12 +35,16 @@ namespace MultiAgentNPC.Quest
             QuestConfig quest,
             string playerText = null,
             string conversationHistory = null,
-            IReadOnlyDictionary<int, QuestState> childStates = null)
+            IReadOnlyDictionary<int, QuestState> childStates = null,
+            string npcName = null,
+            string npcResponseText = null)
         {
             Quest = quest;
             PlayerText = playerText;
             ConversationHistory = conversationHistory;
             ChildStates = childStates ?? new Dictionary<int, QuestState>();
+            NpcName = npcName;
+            NpcResponseText = npcResponseText;
         }
     }
 
