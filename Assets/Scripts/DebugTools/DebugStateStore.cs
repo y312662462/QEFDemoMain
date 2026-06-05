@@ -45,6 +45,15 @@ namespace MultiAgentNPC.DebugTools
         /// <summary>Most recent speech-to-text transcript.</summary>
         public string LastSttText { get; private set; } = string.Empty;
 
+        /// <summary>True while the microphone is actively recording.</summary>
+        public bool Recording { get; private set; }
+
+        /// <summary>Elapsed seconds of the current/last recording.</summary>
+        public float RecordingSeconds { get; private set; }
+
+        /// <summary>Most recent STT error message (empty when none).</summary>
+        public string LastSttError { get; private set; } = string.Empty;
+
         /// <summary>Most recent raw LLM response (before parsing).</summary>
         public string LastLlmRaw { get; private set; } = string.Empty;
 
@@ -95,6 +104,19 @@ namespace MultiAgentNPC.DebugTools
             RaiseChanged();
         }
 
+        public void SetRecording(bool recording, float seconds)
+        {
+            Recording = recording;
+            RecordingSeconds = seconds < 0f ? 0f : seconds;
+            RaiseChanged();
+        }
+
+        public void SetLastSttError(string error)
+        {
+            LastSttError = error ?? string.Empty;
+            RaiseChanged();
+        }
+
         public void SetLastLlmRaw(string raw)
         {
             LastLlmRaw = raw ?? string.Empty;
@@ -141,6 +163,9 @@ namespace MultiAgentNPC.DebugTools
             CurrentQuestName = string.Empty;
             DialogueState = "(none)";
             LastSttText = string.Empty;
+            Recording = false;
+            RecordingSeconds = 0f;
+            LastSttError = string.Empty;
             LastLlmRaw = string.Empty;
             LastJsonParse = string.Empty;
             LastQuestVerdict = string.Empty;

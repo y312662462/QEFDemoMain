@@ -124,7 +124,9 @@ namespace MultiAgentNPC.UI
             sb.AppendLine($"Current Quest: {Describe(s.CurrentQuestName)} (id {s.CurrentQuestId})");
             sb.AppendLine($"Dialogue State: {Describe(s.DialogueState)}");
             sb.AppendLine($"Session: #{s.SessionId}{(s.SessionCancelled ? " [CANCELLED]" : string.Empty)}");
+            sb.AppendLine($"Recording: {(s.Recording ? "yes" : "no")} ({s.RecordingSeconds:0.0}s)");
             sb.AppendLine($"Last STT: {Describe(s.LastSttText)}");
+            sb.AppendLine($"STT Error: {Describe(s.LastSttError)}");
             sb.AppendLine($"Last LLM Raw: {Describe(s.LastLlmRaw)}");
             sb.AppendLine($"Last JSON Parse: {Describe(s.LastJsonParse)}");
             sb.AppendLine($"Last Quest Verdict: {Describe(s.LastQuestVerdict)}");

@@ -196,37 +196,59 @@ namespace MultiAgentNPC.Dialogue
 
         private void OnDebugTextSubmitted(string text)
         {
+            SubmitPlayerText(text);
+        }
+
+        /// <summary>
+        /// True only when a new turn may start: an NPC is active, the state is
+        /// <see cref="DialogueState.InRange"/>, and no dialogue turn is currently running.
+        /// Shared gate for both Debug text and voice (Sprint 8) input.
+        /// </summary>
+        public bool CanStartTalking =>
+            _state == DialogueState.InRange
+            && _currentSession == null
+            && NPCManager.Instance != null
+            && NPCManager.Instance.ActiveNpc != null;
+
+        /// <summary>
+        /// Unified entry point for player text (Debug typing in Sprint 5/6 and STT in
+        /// Sprint 8). Applies the single-turn gate and starts a turn. Returns true when a
+        /// turn was started. Never throws.
+        /// </summary>
+        public bool SubmitPlayerText(string text)
+        {
             string playerText = text != null ? text.Trim() : string.Empty;
             if (string.IsNullOrEmpty(playerText))
             {
-                return;
+                return false;
             }
 
-            if (_state != DialogueState.InRange)
+            if (!CanStartTalking)
             {
                 if (logEvents)
                 {
                     Debug.Log($"[DialogueManager] Input ignored: state is {_state} (NPC busy or no active NPC).");
                 }
-                return;
+                return false;
             }
 
             NPCController active = NPCManager.Instance != null ? NPCManager.Instance.ActiveNpc : null;
             if (active == null)
             {
                 Debug.Log("[DialogueManager] Input ignored: no active NPC.");
-                return;
+                return false;
             }
 
             int npcId = active.NpcId;
             if (NPCManager.Instance == null || !NPCManager.Instance.TryGetNpcConfig(npcId, out NPCConfig config) || config == null)
             {
                 Debug.LogError($"[DialogueManager] No NPCConfig for active NPC {npcId}; cannot start a turn.");
-                return;
+                return false;
             }
 
             DebugStateStore.Instance.SetLastSttText(playerText);
             BeginTurn(npcId, config, playerText);
+            return true;
         }
 
         private async void BeginTurn(int npcId, NPCConfig config, string playerText)

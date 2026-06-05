@@ -2,6 +2,37 @@
 
 Chronological log of what was implemented each sprint. Newest entries on top.
 
+## Sprint 8 - Microphone Recording, Push-To-Talk & Real STT (2026-06-05)
+
+Sprint-order note: the original roadmap placed ActionID-driven animation before real voice
+input. That order was adjusted - real STT (microphone recording + Push-To-Talk + ISTTService)
+is implemented in this Sprint 8, BEFORE ActionID animation, which is deferred to a later sprint.
+
+Goal: feed real voice input into the existing Sprint 6/7 dialogue flow. Hold Space to record,
+release to stop, encode to WAV, transcribe via the real `ISTTService`, and submit the text
+through the same `DialogueManager.SubmitPlayerText` entry as Debug text. No changes to the
+LLM/TTS flow, `DialoguePipeline`, quest judgment, or UI layout. Debug text input is retained.
+
+Done:
+
+- `Assets/Scripts/Utils/WavUtility.cs`: added `EncodeToWav16` (float samples -> 16-bit PCM
+  RIFF/WAVE bytes) that writes the ACTUAL clip frequency and channel count into the header.
+- `Assets/Scripts/Input/PushToTalkInputController.cs`: Input System Talk action wrapper raising
+  `TalkStarted`/`TalkEnded`. Compiles with or without `ENABLE_INPUT_SYSTEM`; when the package is
+  absent it logs an install warning and disables push-to-talk gracefully.
+- `Assets/Scripts/Audio/MicrophoneRecorder.cs`: async-permission-aware capture (16 kHz mono
+  preferred via `Microphone.GetDeviceCaps`, falls back to a supported rate), max-length auto-stop,
+  and typed failures for no-device / permission-denied / too-short.
+- `Assets/Scripts/Dialogue/VoiceInputController.cs`: owns the full voice lifecycle - builds its
+  own `ISTTService`, runs record -> STT -> submit, holds the voice `CancellationTokenSource`,
+  performs mid-leave cancellation (by subscribing to `ActiveNPCService.ActiveNPCCleared`), and
+  runs the pre-submit re-checks before calling `DialogueManager.SubmitPlayerText`.
+- `Assets/Scripts/Dialogue/DialogueManager.cs`: exposes `CanStartTalking` and public
+  `SubmitPlayerText(string)` (shared by Debug text + STT); `OnDebugTextSubmitted` now delegates to
+  it. No microphone/STT logic lives in the manager (ownership boundary).
+- `Assets/Scripts/DebugTools/DebugStateStore.cs` + `Assets/Scripts/UI/DebugPanelUI.cs`: added
+  `Recording`, `RecordingSeconds`, `LastSttError` observability.
+
 ## Sprint 4 - NPC Activation, Interaction Range & Facing (2026-06-04)
 
 Goal: detect the player near an NPC, promote a single global ActiveNPC, expose name +

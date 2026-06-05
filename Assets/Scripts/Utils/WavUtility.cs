@@ -90,6 +90,82 @@ namespace MultiAgentNPC.Utils
             }
         }
 
+        /// <summary>
+        /// Encodes interleaved float PCM samples (range -1..1) into a 16-bit PCM RIFF/WAVE
+        /// byte array. The header is written from the ACTUAL <paramref name="sampleRate"/>
+        /// and <paramref name="channels"/> supplied by the caller (e.g. the recorded
+        /// <c>AudioClip.frequency</c> / <c>AudioClip.channels</c>), never a hard-coded rate.
+        /// Returns null on invalid input.
+        /// </summary>
+        public static byte[] EncodeToWav16(float[] samples, int channels, int sampleRate)
+        {
+            if (samples == null || samples.Length == 0)
+            {
+                Debug.LogError("[WavUtility] EncodeToWav16: no samples to encode.");
+                return null;
+            }
+
+            if (channels < 1 || sampleRate <= 0)
+            {
+                Debug.LogError($"[WavUtility] EncodeToWav16: invalid channels={channels} or sampleRate={sampleRate}.");
+                return null;
+            }
+
+            const int bitsPerSample = 16;
+            int bytesPerSample = bitsPerSample / 8;
+            int dataLength = samples.Length * bytesPerSample;
+            int blockAlign = channels * bytesPerSample;
+            int byteRate = sampleRate * blockAlign;
+
+            // 44-byte canonical header + PCM body.
+            var buffer = new byte[44 + dataLength];
+
+            WriteId(buffer, 0, "RIFF");
+            BitConverter.GetBytes(36 + dataLength).CopyTo(buffer, 4); // ChunkSize
+            WriteId(buffer, 8, "WAVE");
+
+            WriteId(buffer, 12, "fmt ");
+            BitConverter.GetBytes(16).CopyTo(buffer, 16);            // Subchunk1Size (PCM)
+            BitConverter.GetBytes((short)1).CopyTo(buffer, 20);     // AudioFormat = PCM
+            BitConverter.GetBytes((short)channels).CopyTo(buffer, 22);
+            BitConverter.GetBytes(sampleRate).CopyTo(buffer, 24);
+            BitConverter.GetBytes(byteRate).CopyTo(buffer, 28);
+            BitConverter.GetBytes((short)blockAlign).CopyTo(buffer, 32);
+            BitConverter.GetBytes((short)bitsPerSample).CopyTo(buffer, 34);
+
+            WriteId(buffer, 36, "data");
+            BitConverter.GetBytes(dataLength).CopyTo(buffer, 40);
+
+            int pos = 44;
+            for (int i = 0; i < samples.Length; i++)
+            {
+                float clamped = samples[i];
+                if (clamped > 1f)
+                {
+                    clamped = 1f;
+                }
+                else if (clamped < -1f)
+                {
+                    clamped = -1f;
+                }
+
+                short s = (short)Mathf.RoundToInt(clamped * 32767f);
+                buffer[pos] = (byte)(s & 0xFF);
+                buffer[pos + 1] = (byte)((s >> 8) & 0xFF);
+                pos += 2;
+            }
+
+            return buffer;
+        }
+
+        private static void WriteId(byte[] buffer, int offset, string id)
+        {
+            for (int i = 0; i < id.Length; i++)
+            {
+                buffer[offset + i] = (byte)id[i];
+            }
+        }
+
         private static float[] DecodeSamples(byte[] data, int offset, int length, int bitsPerSample, int audioFormat)
         {
             if (audioFormat == 3 && bitsPerSample == 32)
