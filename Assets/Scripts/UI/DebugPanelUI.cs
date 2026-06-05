@@ -123,6 +123,7 @@ namespace MultiAgentNPC.UI
             sb.AppendLine($"Current NPC: {Describe(s.CurrentNpcName)} (id {s.CurrentNpcId})");
             sb.AppendLine($"Current Quest: {Describe(s.CurrentQuestName)} (id {s.CurrentQuestId})");
             sb.AppendLine($"Dialogue State: {Describe(s.DialogueState)}");
+            sb.AppendLine($"Session: #{s.SessionId}{(s.SessionCancelled ? " [CANCELLED]" : string.Empty)}");
             sb.AppendLine($"Last STT: {Describe(s.LastSttText)}");
             sb.AppendLine($"Last LLM Raw: {Describe(s.LastLlmRaw)}");
             sb.AppendLine($"Last JSON Parse: {Describe(s.LastJsonParse)}");

@@ -54,6 +54,12 @@ namespace MultiAgentNPC.DebugTools
         /// <summary>Most recent quest evaluation verdict summary.</summary>
         public string LastQuestVerdict { get; private set; } = string.Empty;
 
+        /// <summary>Current dialogue session id (0 when no turn has started).</summary>
+        public int SessionId { get; private set; }
+
+        /// <summary>True when the current dialogue session has been cancelled.</summary>
+        public bool SessionCancelled { get; private set; }
+
         /// <summary>Current TTS queue length.</summary>
         public int TtsQueueLength { get; private set; }
 
@@ -107,6 +113,13 @@ namespace MultiAgentNPC.DebugTools
             RaiseChanged();
         }
 
+        public void SetSession(int sessionId, bool cancelled)
+        {
+            SessionId = sessionId;
+            SessionCancelled = cancelled;
+            RaiseChanged();
+        }
+
         public void SetTtsQueueLength(int length)
         {
             TtsQueueLength = length < 0 ? 0 : length;
@@ -131,6 +144,8 @@ namespace MultiAgentNPC.DebugTools
             LastLlmRaw = string.Empty;
             LastJsonParse = string.Empty;
             LastQuestVerdict = string.Empty;
+            SessionId = 0;
+            SessionCancelled = false;
             TtsQueueLength = 0;
             LastError = string.Empty;
             RaiseChanged();

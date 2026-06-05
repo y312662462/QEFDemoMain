@@ -1,4 +1,4 @@
 NPCID,NPCName,TTSVoiceID,DefaultPrompt,ProximityPromptText,ProximityPromptAudio,InteractionRadius,TaskID1,Task1InactivePrompt,Task1ActivePrompt,Task1CompletedPrompt,TaskID2,Task2InactivePrompt,Task2ActivePrompt,Task2CompletedPrompt
 10001,Apple Seller,en-US-JennyNeural,apple_seller.txt,Hello! Come here!,apple_seller_hello.wav,3,10003,apple_seller_inactive.txt,apple_seller_active.txt,apple_seller_completed.txt,0,,,
-10002,Baker,en-US-GuyNeural,baker.txt,Fresh bread here!,baker_hello.wav,3,10004,baker_inactive.txt,baker_active.txt,baker_completed.txt,0,,,
-10003,Carrot Seller,en-US-AriaNeural,carrot_seller.txt,Carrots for sale!,carrot_seller_hello.wav,3,10005,carrot_seller_inactive.txt,carrot_seller_active.txt,carrot_seller_completed.txt,0,,,
+10002,Baker,en-US-AriaNeural,baker.txt,Fresh bread here!,baker_hello.wav,3,10004,baker_inactive.txt,baker_active.txt,baker_completed.txt,0,,,
+10003,Carrot Seller,en-US-GuyNeural,carrot_seller.txt,Carrots for sale!,carrot_seller_hello.wav,3,10005,carrot_seller_inactive.txt,carrot_seller_active.txt,carrot_seller_completed.txt,0,,,

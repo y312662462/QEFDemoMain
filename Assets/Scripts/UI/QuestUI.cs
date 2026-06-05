@@ -101,6 +101,7 @@ namespace MultiAgentNPC.UI
             if (_manager != null)
             {
                 _manager.QuestStateChanged += OnQuestStateChanged;
+                Debug.Log($"[QuestUI] Bound to QuestManager (instance {_manager.GetHashCode()}).");
             }
 
             Render();
